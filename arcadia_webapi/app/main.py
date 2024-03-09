@@ -74,13 +74,11 @@ async def send_message(request: MessageSendRequest):
 
     # 最後のメッセージがユーザーのメッセージであればAIの返答を生成する
     if last_message.user_type == 1:
-        last_message = await ai_service.chat(messages)
+        last_message = await generate_ai_messages(ai_service, messages)
         messages.append(last_message)
 
     # 最後のAIのメッセージの内容をパースする
-    print(last_message.content)
     parsed_content = json.loads(last_message.content)
-    print(parsed_content)
 
     # 4つの選択肢に対して、先にAIの返答を作成しておく。
     # 理由はクライアントからのリクエストを待ってから生成しては時間がかかるので、クライアントの演出中に先んじて生成しておくことでユーザー体験を向上させるため
