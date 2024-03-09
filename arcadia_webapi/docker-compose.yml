@@ -1,0 +1,51 @@
+# ローカル環境用の docker-compose でのコンテナ起動
+version: '3.9'
+services:
+  ## arcadia webapiコンテナ
+  arcadia-webapi:
+    container_name: "arcadia-webapi"
+    volumes:
+      - ./app:/app
+    build: .
+    ports:
+      - 80:80
+
+  ## arcadia mysqlコンテナ
+  arcadia-mysql:
+    image: mysql:8.0-debian
+    container_name: arcadia-mysql
+    platform: linux/x86_64
+    volumes:
+      - db-store:/var/lib/mysql:delegated
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d:delegated
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d:delegated
+    environment:
+      TZ: Asia/Tokyo
+      MYSQL_DATABASE: arcadia
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: arcadia
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - 3306:3306
+
+  ## arcadia redisコンテナ
+  arcadia-redis:
+    image: redis:alpine
+    container_name: arcadia-redis
+    environment:
+      TZ: Asia/Tokyo
+    ports:
+      - 6379:6379
+
+## ディスクマウント設定
+volumes:
+  db-store:
+
+## ネットワーク指定
+networks:
+  default:
+    name: arcadia-network
