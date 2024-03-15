@@ -14,7 +14,7 @@ MODEL_NAME = "gpt-4-turbo-preview"
 app = FastAPI()
 
 system_prompt = """
-あなたはテキストシミュレーションゲームのゲームマスターです。ユーザーからの入力に対して、json形式で回答を返してください。
+あなたはテキストシミュレーションゲームのゲームマスターです。ユーザーからの入力に対して、json形式で回答を返してください。（```などで囲む必要はありません）
 最初にユーザーから指定された物語をベースにしつつ物語を進めてください。
 
 ### ユーザーの最初の入力例
@@ -33,6 +33,7 @@ system_prompt = """
     ],
     "options":["自分より弱いやついじめて楽しいか？","まぁ俺には関係ねえか","きびだんごやるから見逃してやってくれ"],
     "finished": false
+    "prompt": "In a serene and picturesque setting by the sea, the timeless Japanese folktale character Urashima Taro approaches a sea turtle surrounded by curious children on a sandy beach."
 }
 
 ### あなたの出力のjsonについての説明
@@ -50,6 +51,8 @@ system_prompt = """
 - finished == trueの時は空配列としてください。
 #### finished
 - ゲーム終了時のみtrueにしてください
+#### prompt
+- 画像生成のためのプロンプト。物語の情景に合わせて最適なDALLE用のプロンプトを設定してください。
 
 ### ユーザーからの回答例
 自分より弱いやついじめて楽しいか？
@@ -97,8 +100,10 @@ async def send_message(request: MessageSendRequest):
 async def generate_ai_messages(ai_service: AiService, messages: list[Message]):
     # 文言の生成
     generated_message = await ai_service.chat(messages)
+    # 生成された文言のパース
+    parsed_content = json.loads(generated_message.content)
     # 画像の生成
-    image_url = await ai_service.generate_image(generated_message.content)
+    image_url = await ai_service.generate_image(parsed_content["prompt"])
     generated_message.image_url = image_url
     return generated_message
 
