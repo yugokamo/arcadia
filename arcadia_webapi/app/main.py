@@ -10,7 +10,7 @@ import asyncio
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-MODEL_NAME = "gpt-4-turbo-preview"
+MODEL_NAME = "gpt-3.5-turbo"
 app = FastAPI()
 
 system_prompt = """
