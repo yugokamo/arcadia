@@ -19,9 +19,9 @@ class AiService:
 
     async def generate_image(self, prompt: str) -> str:
         response = await self.__client.images.generate(
-            model="dall-e-3",
+            model="dall-e-2",
             prompt=prompt,
-            size="1792x1024",
+            size="1024x1024",
             quality="standard",
             n=1,
         )
