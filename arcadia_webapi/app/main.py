@@ -11,7 +11,7 @@ load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 GPT_MODEL_NAME = "gpt-4-turbo-preview"
-CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
+CLAUDE_MODEL_NAME = "claude-3-sonnet-20240229"
 app = FastAPI()
 
 system_prompt = """
@@ -96,6 +96,8 @@ async def send_message(request: MessageSendRequest):
     # 並列で実行し全てが完了するのを待つ
     prepared_messages = await asyncio.gather(*futures)
     return {"messages": messages[1:], "prepared_messages": prepared_messages}
+    # return {"messages": messages[1:], "prepared_messages": []}
+
 
 
 async def generate_ai_messages(ai_service: AiService, messages: list[CustomMessage]):
@@ -106,5 +108,6 @@ async def generate_ai_messages(ai_service: AiService, messages: list[CustomMessa
     # 画像の生成
     image_url = await ai_service.generate_image(parsed_content["prompt"])
     generated_message.image_url = image_url
+    # generated_message.image_url = ''
     return generated_message
 
