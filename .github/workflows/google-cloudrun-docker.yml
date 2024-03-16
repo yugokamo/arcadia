@@ -71,6 +71,7 @@ jobs:
         run: |
           touch ${{ env.DOTENV_PATH }}
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> ${{ env.DOTENV_PATH }}
+          echo "ANTHROPIC_API_KEY"=${{ secrets.ANTHROPIC_API_KEY }}" >> ${{ env.DOTENV_PATH }}
       - name: Google Auth
         id: auth
         uses: 'google-github-actions/auth@v0'
