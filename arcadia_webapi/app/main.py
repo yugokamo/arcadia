@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from dto.message import Message
-from dto.message import MessageSendRequest
+from dto.custommessage import CustomMessage
+from dto.custommessage import MessageSendRequest
 from dotenv import load_dotenv
 from os.path import join, dirname
 from ai_service import AiService
@@ -10,7 +10,8 @@ import asyncio
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-MODEL_NAME = "gpt-3.5-turbo"
+GPT_MODEL_NAME = "gpt-4-turbo-preview"
+CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 app = FastAPI()
 
 system_prompt = """
@@ -71,9 +72,9 @@ async def read_root():
 # スレッドにメッセージを送信するAPI
 @app.post("/message/send")
 async def send_message(request: MessageSendRequest):
-    ai_service = AiService(MODEL_NAME)
+    ai_service = AiService(GPT_MODEL_NAME, CLAUDE_MODEL_NAME)
     messages = request.messages
-    messages.insert(0, Message(index=0, user_type=0, user_id=0, content=system_prompt))
+    messages.insert(0, CustomMessage(index=0, user_type=0, user_id=0, content=system_prompt))
     last_message = messages[-1]
 
     # 最後のメッセージがユーザーのメッセージであればAIの返答を生成する
@@ -89,7 +90,7 @@ async def send_message(request: MessageSendRequest):
     futures = []
     for option in parsed_content["options"]:
         new_messages = messages.copy()
-        new_messages.append(Message(index=len(new_messages), user_type=1, user_id=1, content=option))
+        new_messages.append(CustomMessage(index=len(new_messages), user_type=1, user_id=1, content=option))
         futures.append(generate_ai_messages(ai_service, new_messages))
 
     # 並列で実行し全てが完了するのを待つ
@@ -97,9 +98,9 @@ async def send_message(request: MessageSendRequest):
     return {"messages": messages[1:], "prepared_messages": prepared_messages}
 
 
-async def generate_ai_messages(ai_service: AiService, messages: list[Message]):
+async def generate_ai_messages(ai_service: AiService, messages: list[CustomMessage]):
     # 文言の生成
-    generated_message = await ai_service.chat(messages)
+    generated_message = await ai_service.chatClaude(messages)
     # 生成された文言のパース
     parsed_content = json.loads(generated_message.content)
     # 画像の生成
