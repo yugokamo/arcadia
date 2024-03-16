@@ -1,4 +1,4 @@
-from dto.message import Message
+from dto.custommessage import CustomMessage
 from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
 import os
@@ -11,7 +11,7 @@ class AiService:
         self.__openai_client = AsyncOpenAI()
         self.__anthropic_client = AsyncAnthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"), )
 
-    async def chatGPT(self, messages: list[Message]) -> Message:
+    async def chatGPT(self, messages: list[CustomMessage]) -> CustomMessage:
         roles = ["system", "user", "assistant"]
         schema_messages = [{"role": roles[message.user_type], "content": message.content} for message in messages]
         response = await self.__openai_client.chat.completions.create(
@@ -19,16 +19,19 @@ class AiService:
             messages=schema_messages,
             response_format={"type": "json_object"}
         )
-        return Message(index=len(messages), user_type=2, user_id=1, content=response.choices[0].message.content)
+        return CustomMessage(index=len(messages), user_type=2, user_id=1, content=response.choices[0].message.content)
 
-    async def chatClaude(self, messages: list[Message]) -> Message:
+    async def chatClaude(self, messages: list[CustomMessage]) -> CustomMessage:
         roles = ["system", "user", "assistant"]
-        schema_messages = [{"role": roles[message.user_type], "content": message.content} for message in messages]
-        response = await self.__anthropic_client.messages.create(
+        schema_messages = [{"role": roles[message.user_type], "content": message.content} for message in messages if message.user_type > 0]
+        message = await self.__anthropic_client.messages.create(
+            max_tokens=4096,
+            system=messages[0].content,
             model=self.__claude_model_name,
             messages=schema_messages
         )
-        return Message(index=len(messages), user_type=2, user_id=1, content=response.content[0])
+        print(message)
+        return CustomMessage(index=len(messages), user_type=2, user_id=1, content=message.content[0].text)
 
     async def generate_image(self, prompt: str) -> str:
         response = await self.__openai_client.images.generate(

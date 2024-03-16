@@ -3,7 +3,7 @@ import datetime
 from pydantic import BaseModel
 
 
-class Message(BaseModel):
+class CustomMessage(BaseModel):
     index: int
     user_type: int
     user_id: int
@@ -31,4 +31,4 @@ class ParsedContent(BaseModel):
 
 
 class MessageSendRequest(BaseModel):
-    messages: list[Message]
+    messages: list[CustomMessage]
