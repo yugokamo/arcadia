@@ -30,12 +30,11 @@ class AiService:
             model=self.__claude_model_name,
             messages=schema_messages
         )
-        print(message)
         return CustomMessage(index=len(messages), user_type=2, user_id=1, content=message.content[0].text)
 
     async def generate_image(self, prompt: str) -> str:
         response = await self.__openai_client.images.generate(
-            model="dall-e-2",
+            model="dall-e-3",
             prompt=prompt,
             size="1024x1024",
             quality="standard",
