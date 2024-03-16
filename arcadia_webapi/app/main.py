@@ -82,6 +82,9 @@ async def send_message(request: MessageSendRequest):
         last_message = await generate_ai_messages(ai_service, messages)
         messages.append(last_message)
 
+    if request.init:
+        return {"messages": messages[1:], "prepared_messages": []}
+
     # 最後のAIのメッセージの内容をパースする
     parsed_content = json.loads(last_message.content)
 
@@ -96,7 +99,6 @@ async def send_message(request: MessageSendRequest):
     # 並列で実行し全てが完了するのを待つ
     prepared_messages = await asyncio.gather(*futures)
     return {"messages": messages[1:], "prepared_messages": prepared_messages}
-    # return {"messages": messages[1:], "prepared_messages": []}
 
 
 

@@ -32,3 +32,4 @@ class ParsedContent(BaseModel):
 
 class MessageSendRequest(BaseModel):
     messages: list[CustomMessage]
+    init: bool
