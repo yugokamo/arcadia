@@ -2,6 +2,7 @@ from dto.custommessage import CustomMessage
 from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
 import os
+import asyncio
 
 
 class AiService:
@@ -33,12 +34,20 @@ class AiService:
         return CustomMessage(index=len(messages), user_type=2, user_id=1, content=message.content[0].text)
 
     async def generate_image(self, prompt: str) -> str:
-        response = await self.__openai_client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
-        image_url = response.data[0].url
-        return image_url
+        retries = 3  # 最大リトライ回数
+        for attempt in range(retries):
+            try:
+                response = await self.__openai_client.images.generate(
+                    model="dall-e-3",
+                    prompt=prompt,
+                    size="1024x1024",
+                    quality="standard",
+                    n=1,
+                )
+                image_url = response.data[0].url
+                return image_url
+            except Exception as e:
+                if attempt < retries - 1:  # 最後の試行でなければ、リトライする
+                    await asyncio.sleep(2 ** attempt)  # 指数的バックオフ
+                else:
+                    raise e

@@ -3,3 +3,4 @@ openai==1.13.3
 python-dotenv==1.0.0
 sqlmodel==0.0.8
 anthropic==0.20.0
+asyncio==3.4.3
