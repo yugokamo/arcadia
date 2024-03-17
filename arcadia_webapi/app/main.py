@@ -23,18 +23,18 @@ system_prompt = """
 
 ### あなたの出力例
 {
-    "items": [{"name":"きびだんご", "count":3}, {"name":"気合いの鉢巻","count":1}],
+    "items": [{"name":"角砂糖", "count":3}, {"name":"釣竿","count":1}],
     "life":3,
     "conversations": [
         {"speaker":"ナレーション", "text":"ユーザーは浦島太郎としてこの世界を旅します。ライフが残った状態で玉手箱を封印できたらゲームクリアです。"},
-        {"speaker":"浦島", "text":"今日は良い天気だな"},
+        {"speaker":"太郎", "text":"今日は良い天気だな"},
         {"speaker":"浦島", "text":"ん？何か騒がしいな、海辺の方か"},
         {"speaker":"子供A", "text":"ハッハッハ！こいつノロマでやんのー！"},
         {"speaker":"浦島", "text":"あいつら亀をいじめてやがるのか"}
     ],
-    "options":["自分より弱いやついじめて楽しいか？","まぁ俺には関係ねえか","きびだんごやるから見逃してやってくれ"],
+    "options":["自分より弱いやついじめて楽しいか？","まぁ俺には関係ねえか","角砂糖やるから見逃してやってくれ"],
     "finished": false
-    "prompt": "In a serene and picturesque setting by the sea, the timeless Japanese folktale character Urashima Taro approaches a sea turtle surrounded by curious children on a sandy beach."
+    "prompt": "In a serene and picturesque setting by the sea, the timeless Japanese folktale character approaches a sea turtle surrounded by curious children on a sandy beach."
 }
 
 ### あなたの出力のjsonについての説明
@@ -44,6 +44,7 @@ system_prompt = """
 - ライフポイント。初期値は3で0になったらゲームオーバーです。物語の進行でダメージを受けたと判断したら減らし、回復したら増やしてください
 #### conversations
 - 会話。誰の会話でもない地の文の場合はspeakerには「ナレーション」が入ります
+- conversationの会話履歴は毎回リセットしてください。出力例でいうと、２回目以降の出力では、再び導入ナレーションから始めないでください。
 #### options
 - ユーザーに提示する選択肢。必ず3択で提示してください。
 - 各選択肢には主人公のセリフが入ります。
@@ -53,7 +54,9 @@ system_prompt = """
 #### finished
 - ゲーム終了時のみtrueにしてください
 #### prompt
-- 画像生成のためのプロンプト。物語の情景に合わせて最適なDALLE用のプロンプトを設定してください。
+- 画像生成のためのプロンプト。物語の情景に合わせて最適なのプロンプトを設定してください
+- ただし3DCGゲーム用のクオリティの高い画像を生成するように工夫してください
+- 画像生成のコンテンツポリシーに違反するようなプロンプトを設定しないでください。具体的には、IPの固有名詞などをなるべく避けてください。
 
 ### ユーザーからの回答例
 自分より弱いやついじめて楽しいか？
