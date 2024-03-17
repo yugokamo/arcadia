@@ -11,7 +11,7 @@ load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 GPT_MODEL_NAME = "gpt-4-turbo-preview"
-CLAUDE_MODEL_NAME = "claude-3-sonnet-20240229"
+CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 app = FastAPI()
 
 system_prompt = """
@@ -54,7 +54,8 @@ system_prompt = """
 #### finished
 - ゲーム終了時のみtrueにしてください
 #### prompt
-- 画像生成のためのプロンプト。物語の情景に合わせて最適なのプロンプトを設定してください
+- 画像生成のためのプロンプト。必ず英語で書いてください
+- 物語の情景に合わせて最適なのプロンプトを設定してください
 - ただし3DCGゲーム用のクオリティの高い画像を生成するように工夫してください
 - 画像生成のコンテンツポリシーに違反するようなプロンプトを設定しないでください。具体的には、IPの固有名詞などをなるべく避けてください。
 
