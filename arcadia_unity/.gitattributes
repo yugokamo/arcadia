@@ -58,6 +58,7 @@
 #font
 *.ttf filter=lfs diff=lfs merge=lfs -text
 *.otf filter=lfs diff=lfs merge=lfs -text
+*Fonts/*.asset filter=lfs diff=lfs merge=lfs -text
 
 # Android
 *.a filter=lfs diff=lfs merge=lfs -text
