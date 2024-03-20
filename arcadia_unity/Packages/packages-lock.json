@@ -241,6 +241,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "net.mikinya.unity-voicevox-bridge": {
+      "version": "https://github.com/mikito/unity-voicevox-bridge.git?path=Assets/VoicevoxBridge/",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "49c8b48de234ee844164449bfc37041257dbe8e9"
+    },
     "com.unity.modules.ai": {
       "version": "1.0.0",
       "depth": 0,
