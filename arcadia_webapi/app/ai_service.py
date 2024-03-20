@@ -50,4 +50,4 @@ class AiService:
                 if attempt < retries - 1:  # 最後の試行でなければ、リトライする
                     await asyncio.sleep(2 ** attempt)  # 指数的バックオフ
                 else:
-                    raise e
+                    return "https://storage.googleapis.com/arcadia-dev-image/400Error.png"
