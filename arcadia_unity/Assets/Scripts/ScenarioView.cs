@@ -1,28 +1,37 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using R3;
 
 public class ScenarioView : MonoBehaviour
 {
-    // ScenarioMainImage
     [SerializeField] private RawImage _scenarioMainRawImage;
-    // ScenarioText
     [SerializeField] private TMP_Text _scenarioText;
-    // ScenarioNextSerifButton
     [SerializeField] private Button _scenarioNextSerifButton;
-    // ScenarioOptionButtons
     [SerializeField] private Button[] _scenarioOptionButtons;
-    // LifeText
+    [SerializeField] private Button _itemModalButton;
     [SerializeField] private TMP_Text _lifeText;
+    [SerializeField] private CommonModal _itemModal;
 
+    private string _itemInfo = string.Empty;
+    private void Start()
+    {
+        _itemModalButton.OnClickAsObservable().Subscribe(_ =>
+        {
+            _itemModal.ShowAsync(_itemInfo).Forget();
+        });
+    }
+    
     public async UniTask ExecuteAsync(MessageContent messageContent, bool isLast = false)
     {
+        _itemInfo = string.Join("\n", messageContent.Items.Select(item => $"{item.Name} ×{item.Count}"));
         // 会話を表示
         foreach (var conversation in messageContent.Conversations)
         {

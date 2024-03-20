@@ -34,9 +34,7 @@ public class Presenter : MonoBehaviour
     [SerializeField] private ScenarioView _scenarioView2;
     [SerializeField] private CanvasGroup _scenarioSuccessCanvasGroup;
     [SerializeField] private CanvasGroup _scenarioFailureCanvasGroup;
-    //EndRollText
     [SerializeField] private TMP_Text _endRollText;
-    //ThankYouText
     [SerializeField] private TMP_Text _thankYouText;
     
     
