@@ -137,8 +137,6 @@ async def generate_ai_messages(ai_service: AiService, messages: list[CustomMessa
             generated_message = await ai_service.chatClaude(messages)
             # 生成された文言のパース
             parsed_content = json.loads(generated_message.content)
-            if len(parsed_content["options"]) < 3:
-                raise Exception("選択肢が3つではありません")
             # 画像の生成
             image_url = await ai_service.generate_image(parsed_content["prompt"])
             generated_message.image_url = image_url
@@ -147,6 +145,6 @@ async def generate_ai_messages(ai_service: AiService, messages: list[CustomMessa
             if attempt < retries - 1:  # 最後の試行でなければ、リトライする
                 await asyncio.sleep(2 ** attempt)  # 指数的バックオフ
             else:
-                return CustomMessage(index=len(messages), user_type=2, user_id=1, content="エラーが発生しました。")
+                return CustomMessage(index=len(messages), user_type=2, user_id=1, content=e)
 
 
