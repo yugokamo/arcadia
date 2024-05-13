@@ -32,6 +32,7 @@ public class ScenarioView : MonoBehaviour
     public async UniTask ExecuteAsync(MessageContent messageContent, bool isLast = false)
     {
         _itemInfo = string.Join("\n", messageContent.Items.Select(item => $"{item.Name} ×{item.Count}"));
+        var voices = messageContent.Voices;
         // 会話を表示
         foreach (var conversation in messageContent.Conversations)
         {
@@ -45,6 +46,20 @@ public class ScenarioView : MonoBehaviour
             }
             else
             {
+                var existSpeaker = voices.TryGetValue(conversation.Speaker, out var speakerType);
+                if (existSpeaker)
+                {
+                    var voice = await VoiceManager.Instance.CreateAsync(speakerType, conversation.Text);
+                    if (voice != null)
+                    {
+                        UniTask.Create(async () =>
+                        {
+                            SoundManager.Instance.SetVolume(0.2f, 1.0f);
+                            await UniTask.Delay(1000);
+                            VoiceManager.Instance.PlayAsync(voice).Forget();
+                        });
+                    }
+                }
                 await TypeText(
                     $@"
 {conversation.Speaker}:
@@ -54,9 +69,9 @@ public class ScenarioView : MonoBehaviour
             }
 
             // 1秒待機
-            await UniTask.Delay(1000);
+            // await UniTask.Delay(1000);
             // ボタンが押されるまで待機
-            await _scenarioNextSerifButton.OnClickAsync();
+            // await _scenarioNextSerifButton.OnClickAsync();
         }
 
         if (isLast)
@@ -65,12 +80,22 @@ public class ScenarioView : MonoBehaviour
         }
         
         // 選択肢とボタンを表示
-        await TypeText(
-            $@"
+        if (messageContent.Options.Count == 3)
+        {
+            await TypeText(
+                $@"
 1. {messageContent.Options[0]}
 2. {messageContent.Options[1]}
 3. {messageContent.Options[2]}"
-            , CancellationToken.None);
+                , CancellationToken.None);
+        }
+        else
+        {
+            await TypeText(
+                "次に進む"
+                , CancellationToken.None);
+        }
+
         
         // 1秒待機
         await UniTask.Delay(1000);
@@ -111,13 +136,14 @@ public class ScenarioView : MonoBehaviour
             }
 
             _scenarioText.text += c; // 1文字ずつ追加
-            await UniTask.Delay(200, cancellationToken: cancellationToken);
+            await UniTask.Delay(160, cancellationToken: cancellationToken);
         }
     }
     
     // URLの画像をScenarioMainRawImageに表示
     public async UniTask InitAsync(string url, int life)
     {
+        _scenarioText.text = ""; // テキストをクリア
         var request = UnityWebRequestTexture.GetTexture(url);
         await request.SendWebRequest();
         var texture = DownloadHandlerTexture.GetContent(request);

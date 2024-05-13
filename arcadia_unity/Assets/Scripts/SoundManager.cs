@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Cysharp.Threading.Tasks; // UniTaskを使用するために必要
+using Cysharp.Threading.Tasks;
+using DG.Tweening; // UniTaskを使用するために必要
 
 public class SoundManager : MonoBehaviour
 {
@@ -31,10 +32,15 @@ public class SoundManager : MonoBehaviour
         AudioClip clip = _audioClips[tension];
         if (clip != null)
         {
-            _audioSource.volume = 1;
+            _audioSource.volume = 0.8f;
             _audioSource.loop = true;
             _audioSource.PlayOneShot(clip);
         }
+    }
+    
+    public void SetVolume(float volume, float duration)
+    {
+        _audioSource.DOFade(volume, duration);
     }
 
     // n秒間かけて曲をフェードアウトさせるメソッド

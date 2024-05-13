@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
+using VoicevoxBridge;
 
 // UnityWebRequestを使ってAPIを叩く
 public class Api
@@ -90,6 +91,9 @@ public class MessageContent
     //conversations
     [JsonPropertyName("conversations")]
     public List<Conversation> Conversations { get; set; }
+    //voices
+    [JsonPropertyName("voices")]
+    public Dictionary<string, int> Voices { get; set; }
     //options
     [JsonPropertyName("options")]
     public List<string> Options { get; set; }

@@ -12,10 +12,12 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using UnityEngine.Video;
+using VoicevoxBridge;
 
 public class Presenter : MonoBehaviour
 {
     [SerializeField] private VideoPlayer _topLoopVideoPlayer;
+    [SerializeField] private VideoPlayer _topTutorialVideoPlayer;
     [SerializeField] private VideoPlayer _topTransitionVideoPlayer;
     
     [SerializeField] private GameObject _topPage;
@@ -27,8 +29,6 @@ public class Presenter : MonoBehaviour
     [SerializeField] private TMP_InputField _topScenarioSelectInputField;
     [SerializeField] private Button _topScenarioSelectYesButton;
     [SerializeField] private CanvasGroup _topUserNameCanvasGroup;
-    [SerializeField] private TMP_InputField _topUserNameInputField;
-    [SerializeField] private Button _topUserNameYesButton;
     [SerializeField] private CanvasGroup _topTransitionToScenarioCanvasGroup;
     [SerializeField] private ScenarioView _scenarioView1;
     [SerializeField] private ScenarioView _scenarioView2;
@@ -42,13 +42,15 @@ public class Presenter : MonoBehaviour
 
     async void Start()
     {
+        await UniTask.Delay(2000);
         await ExecuteGameAsync();
     }
 
     async UniTask ExecuteGameAsync()
     {
         _currentCanvasGroup = _topSplashCanvasGroup;
-        await UniTask.Delay(2000);
+        await VoiceManager.Instance.PlayAsync(1, "プロジェクト・アルカディア");
+        await UniTask.Delay(1000);
         SoundManager.Instance.PlayBGM(0);
         // スプラッシュイメージをフェードアウトしてタイトル画面を表示
         await UniTask.Delay(3000);
@@ -57,7 +59,6 @@ public class Presenter : MonoBehaviour
         
         // タイトルスタートボタンを押すとシナリオ選択画面を表示
         await _topTitleStartButton.OnClickAsync();
-
         await ChangeCanvasGroupAsync(_topScenarioSelectCanvasGroup);
         
         // シナリオ選択決定ボタンを押すと次に進む
@@ -76,14 +77,11 @@ public class Presenter : MonoBehaviour
             // 同時に、ユーザー名入力とその後のシナリオ遷移画面を表示
             UniTask.Create(async () => 
             {
-                // ユーザー名入力画面に遷移
+                await _topBlackImage.DOFade(0f, 1f);
+                _topTutorialVideoPlayer.gameObject.SetActive(true);
+                _topLoopVideoPlayer.gameObject.SetActive(false);
                 await ChangeCanvasGroupAsync(_topUserNameCanvasGroup);
-                // ユーザー名確定ボタンを押すとローディングに遷移
-                await _topUserNameYesButton.OnClickAsync();
-                // ユーザー名を取得
-                var userName = _topUserNameInputField.text;
-                // シナリオへの遷移アニメーション画面に切り替え
-                await ChangeCanvasGroupAsync(_topTransitionToScenarioCanvasGroup);
+                await UniTask.Delay(35000);
                 // アニメーション実行
                 await AnimationTransitionFromTopToScenarioAsync();
                 // BGMをフェードアウト
@@ -136,7 +134,16 @@ public class Presenter : MonoBehaviour
             // 最後のメッセージを取得
             lastMessage = messages.Last();
             // 最後のメッセージのmessageContent(AIが生成したJSON文字列)をデシリアライズ
-            messageContent = JsonSerializer.Deserialize<MessageContent>(lastMessage.Content);
+            try
+            {
+                messageContent = JsonSerializer.Deserialize<MessageContent>(lastMessage.Content);
+            }
+            catch (Exception e)
+            {
+                Debug.Log(lastMessage.Content);
+                Debug.LogError(e);
+                throw;
+            }
         }
         Debug.Log("終了");
 
@@ -154,12 +161,13 @@ public class Presenter : MonoBehaviour
         // ローカル関数: トップ画面からシナリオ画面への遷移アニメーション
         async UniTask AnimationTransitionFromTopToScenarioAsync()
         {
-            await _topBlackImage.DOFade(0f, 1f);
-            await UniTask.Delay(2000);
+            await UniTask.Delay(4000);
             _topTransitionVideoPlayer.gameObject.SetActive(true);
-            _topLoopVideoPlayer.gameObject.SetActive(false);
+            _topTutorialVideoPlayer.gameObject.SetActive(false);
+            await ChangeCanvasGroupAsync(_topTransitionToScenarioCanvasGroup);
             await UniTask.Delay(2000);
             Destroy(_topLoopVideoPlayer);
+            Destroy(_topTutorialVideoPlayer);
             await UniTask.Delay(3000);
             await _topBlackImage.DOFade(1f, 3f);
         }
@@ -174,16 +182,16 @@ public class Presenter : MonoBehaviour
         if (life > 0)
         {
             await ChangeCanvasGroupAsync(_scenarioSuccessCanvasGroup);
-            SoundManager.Instance.PlayBGM(4);
+            SoundManager.Instance.PlayBGM(6);
         }
         else
         {
             await ChangeCanvasGroupAsync(_scenarioFailureCanvasGroup);
-            SoundManager.Instance.PlayBGM(4);
+            SoundManager.Instance.PlayBGM(6);
         }
         
-        // EndRollTextを上方向にスクロールY=2070まで
-        _endRollText.rectTransform.DOLocalMoveY(2070, 48f).SetEase(Ease.Linear).ToUniTask();
+        // EndRollTextを上方向にスクロール
+        _endRollText.rectTransform.DOLocalMoveY(2170, 32f).SetEase(Ease.Linear).ToUniTask();
 
         await UniTask.Delay(29000);
         
@@ -213,7 +221,7 @@ public class Presenter : MonoBehaviour
         await ChangeCanvasGroupAsync(nextScenarioView.GetComponent<CanvasGroup>());
         
         // 音楽を再生
-        SoundManager.Instance.PlayBGM(messageContent.Tension);
+        SoundManager.Instance.PlayBGM(messageContent.Finished ? 2 : messageContent.Tension);
         
         // シナリオを実行
         await nextScenarioView.ExecuteAsync(messageContent, messageContent.Finished);
