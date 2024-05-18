@@ -6,6 +6,7 @@ from os.path import join, dirname
 from ai_service import AiService
 import json
 import asyncio
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
@@ -13,6 +14,18 @@ load_dotenv(dotenv_path)
 GPT_MODEL_NAME = "gpt-4-turbo-preview"
 CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 app = FastAPI()
+
+origins = [
+    "https://cloud-run-service-webfront-eumuzuktzq-an.a.run.app",
+    "http://localhost:3000",
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 system_prompt = """
 あなたはテキストシミュレーションゲームのゲームマスターです。ユーザーからの入力に対して、json形式で回答を返してください。（```などで囲む必要はありません）
