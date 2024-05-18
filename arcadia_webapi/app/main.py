@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-GPT_MODEL_NAME = "gpt-4-turbo-preview"
+GPT_MODEL_NAME = "gpt-4-o"
 CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 app = FastAPI()
 
@@ -148,7 +148,7 @@ async def generate_ai_messages(ai_service: AiService, messages: list[CustomMessa
     for attempt in range(retries):
         try:
             # 文言の生成
-            generated_message = await ai_service.chatClaude(messages)
+            generated_message = await ai_service.chatGPT(messages)
             # 生成された文言のパース
             parsed_content = json.loads(generated_message.content)
             # 画像の生成
