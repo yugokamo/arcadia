@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv(verbose=True)
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
-GPT_MODEL_NAME = "gpt-4-o"
+GPT_MODEL_NAME = "gpt-4o"
 CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 app = FastAPI()
 
