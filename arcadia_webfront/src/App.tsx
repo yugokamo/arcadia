@@ -119,7 +119,7 @@ function App() {
                 }
 
                 // テキストを0.1秒に1文字ずつ表示
-                const conversationsText = parsedContent.conversations.map(conv => `${conv.speaker}: ${conv.text}`).join(" ");
+                const conversationsText = parsedContent.conversations.map(conv => `${conv.speaker}: ${conv.text}`).join("\n");
                 const optionsText = parsedContent.options ? parsedContent.options.map((option, index) => `${index + 1}. ${option}`).join("\n") : "";
                 const fullText = conversationsText + (optionsText ? "\n" + optionsText : "");
                 console.log('Full Text:', fullText);
