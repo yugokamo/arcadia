@@ -9,10 +9,13 @@ import {
     Text,
     Image,
     Spinner,
-    DrawerContent, useDisclosure, useColorMode, Textarea
+    DrawerContent,
+    useDisclosure,
+    useColorMode,
+    Textarea
 } from '@chakra-ui/react';
 import SidebarContent from "./SidebarContent";
-import {useState} from "react";
+import { useState, useEffect, useRef } from "react";
 
 // 型の定義
 interface Conversation {
@@ -50,6 +53,11 @@ function App() {
     const [story, setStory] = useState("");
     const [responseContent, setResponseContent] = useState<Message | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [displayText, setDisplayText] = useState<string>("");
+    const [showOptions, setShowOptions] = useState<boolean>(false);
+
+    const currentIndexRef = useRef(0); // currentIndexをuseRefで管理
+    const intervalRef = useRef<number | null>(null);
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setStory(e.target.value);
@@ -93,10 +101,49 @@ function App() {
                     parsedContent = lastMessage.content;
                 }
 
+                // optionsがオブジェクトであれば文字列に変換する
+                if (parsedContent.options && !Array.isArray(parsedContent.options)) {
+                    parsedContent.options = Object.values(parsedContent.options);
+                }
+
                 setResponseContent({
                     ...lastMessage,
                     content: parsedContent
                 });
+
+                // テキスト表示を初期化
+                setDisplayText("");
+                setShowOptions(false);
+                if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                }
+
+                // テキストを0.1秒に1文字ずつ表示
+                const conversationsText = parsedContent.conversations.map(conv => `${conv.speaker}: ${conv.text}`).join(" ");
+                const optionsText = parsedContent.options ? parsedContent.options.map((option, index) => `${index + 1}. ${option}`).join("\n") : "";
+                const fullText = conversationsText + (optionsText ? "\n" + optionsText : "");
+                console.log('Full Text:', fullText);
+
+                currentIndexRef.current = 0; // currentIndexを初期化
+
+                intervalRef.current = window.setInterval(() => {
+                    const currentIndex = currentIndexRef.current;
+
+                    if (currentIndex >= fullText.length) {
+                        if (intervalRef.current) {
+                            clearInterval(intervalRef.current);
+                        }
+                        setShowOptions(true);
+                        return;
+                    }
+                    console.log('Before setDisplayText:', currentIndex, fullText[currentIndex]);
+                    setDisplayText(prev => {
+                        console.log(`Inside setDisplayText - currentIndex: ${currentIndex}, char: ${fullText[currentIndex]}`);
+                        return prev + fullText[currentIndex];
+                    });
+                    console.log('After setDisplayText:', currentIndex);
+                    currentIndexRef.current++;
+                }, 100);
             } else {
                 console.error('Story generation failed:', response.statusText);
             }
@@ -106,6 +153,21 @@ function App() {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        console.log('displayText updated:', displayText);
+        if (displayText.includes("undefined")) {
+            console.log("displayText includes undefined:", displayText);
+        }
+    }, [displayText]);
+
+    useEffect(() => {
+        return () => {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    }, []);
 
     const handleOptionSelection = (optionIndex: number) => {
         console.log(`Option ${optionIndex} selected`);
@@ -158,18 +220,9 @@ function App() {
                                 {responseContent.image_url && (
                                     <Image boxSize="512px" src={responseContent.image_url} alt="Generated Story" />
                                 )}
-                                {responseContent.content && responseContent.content.conversations && responseContent.content.conversations.length > 0 ? (
-                                    responseContent.content.conversations.map((conv, index) => (
-                                        <Text key={index} textAlign='left'><strong>{conv.speaker}:</strong> {conv.text}</Text>
-                                    ))
-                                ) : (
-                                    <Text>物語の内容がありません</Text>
-                                )}
-                                {responseContent.content && responseContent.content.options && responseContent.content.options.length > 0 && (
+                                <Text textAlign='left' whiteSpace="pre-line">{displayText}</Text>
+                                {showOptions && responseContent.content && responseContent.content.options && responseContent.content.options.length > 0 && (
                                     <Stack spacing={2} mt={4}>
-                                        {responseContent.content.options.map((option, index) => (
-                                            <Text key={index} textAlign='left'>{index+1}. {option}</Text>
-                                        ))}
                                         <Stack direction="row" spacing={4}>
                                             {responseContent.content.options.map((_, index) => (
                                                 <Button key={index} colorScheme="blue" onClick={() => handleOptionSelection(index + 1)}>
