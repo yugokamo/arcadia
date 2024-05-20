@@ -34,6 +34,7 @@ class AiService:
         return CustomMessage(index=len(messages), user_type=2, user_id=1, content=message.content[0].text)
 
     async def generate_image(self, prompt: str) -> str:
+        return "https://storage.googleapis.com/arcadia-dev-image/400Error.png"
         retries = 3  # 最大リトライ回数
         for attempt in range(retries):
             try:
