@@ -11,52 +11,22 @@ import {
     Spinner,
     DrawerContent,
     useDisclosure,
-    useColorMode,
-    Textarea
+    Textarea, Divider
 } from '@chakra-ui/react';
 import SidebarContent from "./SidebarContent";
 import { useState, useEffect, useRef } from "react";
-
-// 型の定義
-interface Conversation {
-    speaker: string;
-    text: string;
-}
-
-interface MessageContent {
-    items?: Array<{ name: string; count: number }>;
-    life?: number;
-    conversations: Conversation[];
-    voices?: Record<string, number>;
-    options?: string[];
-    tension?: number;
-    crisis?: boolean;
-    finished?: boolean;
-    prompt?: string;
-}
-
-interface Message {
-    index: number;
-    user_type: number;
-    user_id: number;
-    content: MessageContent;
-    image_url: string;
-}
-
-interface ApiResponse {
-    messages: Message[];
-}
+import { generateStory, Message, MessageContent } from './api'; // api.tsからインポート
 
 function App() {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const { toggleColorMode } = useColorMode();
     const [story, setStory] = useState("");
-    const [responseContent, setResponseContent] = useState<Message | null>(null);
+    const [responseMessage, setResponseMessage] = useState<Message | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [displayText, setDisplayText] = useState<string>("");
+    const [displayBodyText, setDisplayBodyText] = useState<string>("");
+    const [displayOptionText, setDisplayOptionText] = useState<string>("");
     const [showOptions, setShowOptions] = useState<boolean>(false);
 
-    const currentIndexRef = useRef(0); // currentIndexをuseRefで管理
+    // const currentIndexRef = useRef(0);
     const intervalRef = useRef<number | null>(null);
 
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -65,101 +35,62 @@ function App() {
 
     const handleStoryGeneration = async () => {
         setIsLoading(true);
-        const requestBody = {
-            messages: [
-                {
-                    index: 1,
-                    user_type: 1,
-                    user_id: 1,
-                    content: story,
-                    image_url: ""
-                }
-            ],
-            init: true
-        };
 
         try {
-            const response = await fetch('https://cloud-run-service-webapi-eumuzuktzq-an.a.run.app/message/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody),
+            const responseData = await generateStory(story);
+            console.log('Story generated successfully:', responseData);
+            const messages = responseData.messages;
+            const lastMessage = messages[messages.length - 1];
+
+            const parsedContent = lastMessage.content as MessageContent;
+
+            setResponseMessage({
+                ...lastMessage,
+                content: parsedContent as MessageContent
             });
 
-            if (response.ok) {
-                const responseData: ApiResponse = await response.json();
-                console.log('Story generated successfully:', responseData);
-                const messages = responseData.messages;
-                const lastMessage = messages[messages.length - 1];
-
-                // contentをパースする
-                let parsedContent: MessageContent;
-                if (typeof lastMessage.content === 'string') {
-                    parsedContent = JSON.parse(lastMessage.content);
-                } else {
-                    parsedContent = lastMessage.content;
-                }
-
-                // optionsがオブジェクトであれば文字列に変換する
-                if (parsedContent.options && !Array.isArray(parsedContent.options)) {
-                    parsedContent.options = Object.values(parsedContent.options);
-                }
-
-                setResponseContent({
-                    ...lastMessage,
-                    content: parsedContent
-                });
-
-                // テキスト表示を初期化
-                setDisplayText("");
-                setShowOptions(false);
-                if (intervalRef.current) {
-                    clearInterval(intervalRef.current);
-                }
-
-                // テキストを0.1秒に1文字ずつ表示
-                const conversationsText = parsedContent.conversations.map(conv => `${conv.speaker}: ${conv.text}`).join("\n");
-                const optionsText = parsedContent.options ? parsedContent.options.map((option, index) => `${index + 1}. ${option}`).join("\n") : "";
-                const fullText = conversationsText + (optionsText ? "\n" + optionsText : "");
-                console.log('Full Text:', fullText);
-
-                currentIndexRef.current = 0; // currentIndexを初期化
-
-                intervalRef.current = window.setInterval(() => {
-                    const currentIndex = currentIndexRef.current;
-
-                    if (currentIndex >= fullText.length) {
-                        if (intervalRef.current) {
-                            clearInterval(intervalRef.current);
-                        }
-                        setShowOptions(true);
-                        return;
-                    }
-                    console.log('Before setDisplayText:', currentIndex, fullText[currentIndex]);
-                    setDisplayText(prev => {
-                        console.log(`Inside setDisplayText - currentIndex: ${currentIndex}, char: ${fullText[currentIndex]}`);
-                        return prev + fullText[currentIndex];
-                    });
-                    console.log('After setDisplayText:', currentIndex);
-                    currentIndexRef.current++;
-                }, 100);
-            } else {
-                console.error('Story generation failed:', response.statusText);
+            setDisplayBodyText("");
+            // 選択肢は最初は非表示にしておく
+            setShowOptions(false);
+            // setIntervalがまだ動いていたら止める
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
             }
+
+            // 本文 (話者: セリフ...)
+            const conversationsText = parsedContent.conversations.map(conv => `${conv.speaker}:  ${conv.text}`).join("\n");
+            // 選択肢 (1. 選択肢1の内容...)
+            const optionsText = parsedContent.options ? parsedContent.options.map((option, index) => `${index + 1}. ${option}`).join("\n") : "";
+
+            // currentIndexRef.current = 0;
+            let currentIndexVal = 0;
+
+            intervalRef.current = window.setInterval(() => {
+                // 非同期関数setDisplayText内でcurrentIndexを参照するため、ここで値をキャプチャする
+                // const currentIndex = currentIndexRef.current;
+                const currentIndex = currentIndexVal;
+
+                // テキストを全て表示したらsetIntervalを止めて、選択肢を表示する
+                if (currentIndex < conversationsText.length) {
+                    setDisplayBodyText(prev => prev + conversationsText[currentIndex]);
+                } else if (currentIndex < conversationsText.length + optionsText.length) {
+                    setDisplayOptionText(prev => prev + optionsText[currentIndex - conversationsText.length]);
+                } else {
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                    }
+                    setShowOptions(true);
+                    return;
+                }
+                // currentIndexRef.current++;
+                currentIndexVal++;
+            }, 100);
         } catch (error) {
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
     };
-
-    useEffect(() => {
-        console.log('displayText updated:', displayText);
-        if (displayText.includes("undefined")) {
-            console.log("displayText includes undefined:", displayText);
-        }
-    }, [displayText]);
 
     useEffect(() => {
         return () => {
@@ -197,7 +128,7 @@ function App() {
                 {/*<MobileNav display={{ base: 'flex', md: 'none' }} onOpen={onOpen} />*/}
                 <Box ml={{ base: 0, md: 60 }} p="4">
                     <Stack spacing={3}>
-                        {!responseContent ? (
+                        {!responseMessage ? (
                             isLoading ? (
                                 <>
                                     <Text fontSize="xl" textAlign='left'>物語生成中…</Text>
@@ -216,15 +147,24 @@ function App() {
                             )
                         ) : (
                             <>
-                                {/*<Heading size='lg' textAlign='left'>生成された物語</Heading>*/}
-                                {responseContent.image_url && (
-                                    <Image boxSize="512px" src={responseContent.image_url} alt="Generated Story" />
+
+                                {responseMessage.image_url && (
+                                    <Image boxSize="512px" src={responseMessage.image_url} alt="Generated Story" />
                                 )}
-                                <Text textAlign='left' whiteSpace="pre-line">{displayText}</Text>
-                                {showOptions && responseContent.content && responseContent.content.options && responseContent.content.options.length > 0 && (
+                                {/*本文と選択肢内容の表示*/}
+                                <Text textAlign='left' whiteSpace="pre-line">{displayBodyText}</Text>
+                                {/*選択肢の文字列が空でなければ罫線と選択肢文字列を表示する*/}
+                                {displayOptionText && (
+                                    <>
+                                        <Divider />
+                                        <Text textAlign='left' whiteSpace="pre-line">{displayOptionText}</Text>
+                                    </>
+                                )}
+                                {/*選択肢ボタンの表示*/}
+                                {showOptions && typeof responseMessage.content !== 'string' && responseMessage.content.options && responseMessage.content.options.length > 0 && (
                                     <Stack spacing={2} mt={4}>
                                         <Stack direction="row" spacing={4}>
-                                            {responseContent.content.options.map((_, index) => (
+                                            {responseMessage.content.options.map((_, index) => (
                                                 <Button key={index} colorScheme="blue" onClick={() => handleOptionSelection(index + 1)}>
                                                     {index + 1}
                                                 </Button>
